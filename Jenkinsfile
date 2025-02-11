@@ -29,7 +29,7 @@ pipeline {
                 script {
                     def startTime = System.currentTimeMillis()
                     
-                    dir('frontend') {
+                    dir('eCommerce_Reactjs') {
                         sh 'node -v'  // Kiểm tra version
                         sh 'npm -v'   // Kiểm tra npm
                         sh 'npm install'
