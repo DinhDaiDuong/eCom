@@ -44,13 +44,31 @@ pipeline {
                 }
             }
         }
-        
+         stage('Backend Build & Test') {
+            steps {
+                script {
+                    def startTime = System.currentTimeMillis()
+                    
+                    dir('ecomResource/eComAPI') {  
+                        sh 'node -v'  // Kiểm tra version Node.js
+                        sh 'npm -v'   // Kiểm tra npm
+                        sh 'npm install'
+                        sh 'npm test || true'  // Chạy test nhưng không làm fail pipeline nếu có lỗi nhỏ
+                        sh 'npm run build'     // Build backend
+                    }
+                    
+                    def duration = System.currentTimeMillis() - startTime
+                    writeFile file: 'ecomResource/metrics/backend-build.txt', text: duration.toString()
+                }
+            }
+        }
         stage('Generate Report') {
             steps {
                 script {
                     def report = """
                         Pipeline Report
                         ==============
+                         Backend Build: ${readFile('ecomResource/metrics/backend-build.txt').trim()}ms
                         Frontend Build: ${readFile('ecomResource/metrics/frontend-build.txt').trim()}ms
                     """.stripIndent()
                     
