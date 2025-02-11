@@ -1,6 +1,10 @@
 pipeline {
     agent any
     
+    tools {
+        nodejs 'nodejs16'  // Tên đã cấu hình ở trên
+    }
+    
     environment {
         BUILD_START_TIME = ''
     }
@@ -26,6 +30,8 @@ pipeline {
                     def startTime = System.currentTimeMillis()
                     
                     dir('frontend') {
+                        sh 'node -v'  // Kiểm tra version
+                        sh 'npm -v'   // Kiểm tra npm
                         sh 'npm install'
                         sh 'npm test'
                         sh 'npm run build'
@@ -37,8 +43,6 @@ pipeline {
             }
         }
         
-        // Các stage khác tương tự
-        
         stage('Generate Report') {
             steps {
                 script {
@@ -46,7 +50,6 @@ pipeline {
                         Pipeline Report
                         ==============
                         Frontend Build: ${readFile('metrics/frontend-build.txt').trim()}ms
-                        Resources: ${readFile('metrics/resources.txt')}
                     """.stripIndent()
                     
                     writeFile file: 'pipeline-report.md', text: report
