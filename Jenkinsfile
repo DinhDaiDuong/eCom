@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     tools {
-        nodejs 'nodejs16'  // Tên đã cấu hình ở trên
+        nodejs 'Nodejs16'  // Tên đã cấu hình ở trên
     }
     
     environment {
