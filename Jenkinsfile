@@ -39,7 +39,7 @@ pipeline {
                     
                     def duration = System.currentTimeMillis() - startTime
                     sh "echo ${duration} > metrics/frontend-build.txt"
-                     writeFile file: 'metrics/frontend-build.txt', text: duration.toString()
+                     writeFile file: 'ecomResource/metrics/frontend-build.txt', text: duration.toString()
                 }
             }
         }
@@ -50,7 +50,7 @@ pipeline {
                     def report = """
                         Pipeline Report
                         ==============
-                        Frontend Build: ${readFile('metrics/frontend-build.txt').trim()}ms
+                        Frontend Build: ${readFile('ecomResource/metrics/frontend-build.txt').trim()}ms
                     """.stripIndent()
                     
                     writeFile file: 'pipeline-report.md', text: report
@@ -70,7 +70,7 @@ pipeline {
             def diskUsage = sh(script: 'df -h / | awk \'NR==2{print $5}\'', returnStdout: true).trim()
             
             // Lưu metrics
-            writeFile file: 'metrics/resources.txt', text: """
+            writeFile file: 'ecomResource/metrics/resources.txt', text: """
                 CPU: ${cpuUsage}%
                 Memory: ${memUsage}%
                 Disk: ${diskUsage}
