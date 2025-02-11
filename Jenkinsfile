@@ -49,7 +49,7 @@ pipeline {
                 script {
                     def startTime = System.currentTimeMillis()
                     
-                    dir('ecomResource/eComAPI') {  
+                    dir('ecomResource/ecomAPI') {  
                         sh 'node -v'  // Kiểm tra version Node.js
                         sh 'npm -v'   // Kiểm tra npm
                         sh 'npm install'
