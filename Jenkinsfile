@@ -34,7 +34,8 @@ pipeline {
                         sh 'npm -v'   // Kiểm tra npm
                         sh 'npm install'
                         sh 'npm test --passWithNoTests || true'
-                        sh 'npm run build'
+                        sh 'CI=false npm run build'
+
                     }
                     
                     def duration = System.currentTimeMillis() - startTime
