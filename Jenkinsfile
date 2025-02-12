@@ -10,6 +10,15 @@ pipeline {
     }
     
     stages {
+        stage('Check Files') {
+    steps {
+        sh 'pwd'
+        sh 'ls -la'
+        dir('ecomResource') {
+            sh 'ls -la'
+        }
+    }
+}
         stage('Check Docker') {
             steps {
                 sh 'whoami'   // Kiểm tra user đang chạy Jenkins
@@ -18,20 +27,20 @@ pipeline {
             }
         }
          stage('Build Docker Images') {
-            steps {
-                script {
-                    sh 'docker-compose build'
-                }
-            }
+    steps {
+        dir('ecomResource') {  // Di chuyển vào thư mục chứa docker-compose.yml
+            sh 'docker-compose build'
         }
+    }
+}
 
-        stage('Run Containers') {
-            steps {
-                script {
-                    sh 'docker-compose up -d'
-                }
-            }
+stage('Run Containers') {
+    steps {
+        dir('ecomResource') {
+            sh 'docker-compose up -d'
         }
+    }
+}
 
         stage('Check Running Containers') {
             steps {

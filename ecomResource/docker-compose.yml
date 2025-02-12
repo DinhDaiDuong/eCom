@@ -1,15 +1,18 @@
 version: '3'
-services:
-  app:
-    build: .
-    ports:
-      - "80:80"
-      - "5000:5000"
-    environment:
-      - NODE_ENV=production
-    networks:
-      - app-network
 
-networks:
-  app-network:
-    driver: bridge
+services:
+  frontend:
+    build:
+      context: ./eCommerce_Reactjs
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./ecomAPI
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
