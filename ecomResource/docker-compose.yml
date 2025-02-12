@@ -15,4 +15,4 @@ services:
       context: ./ecomAPI
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "8003:8003"
