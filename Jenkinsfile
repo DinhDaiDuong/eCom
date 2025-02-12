@@ -10,6 +10,29 @@ pipeline {
     }
     
     stages {
+         stage('Build Docker Images') {
+            steps {
+                script {
+                    sh 'docker-compose build'
+                }
+            }
+        }
+
+        stage('Run Containers') {
+            steps {
+                script {
+                    sh 'docker-compose up -d'
+                }
+            }
+        }
+
+        stage('Check Running Containers') {
+            steps {
+                script {
+                    sh 'docker ps'
+                }
+            }
+        }
         stage('Setup Metrics Directory') {
             steps {
                 sh 'mkdir -p metrics'
