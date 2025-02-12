@@ -10,6 +10,13 @@ pipeline {
     }
     
     stages {
+        stage('Check Docker') {
+            steps {
+                sh 'whoami'   // Kiểm tra user đang chạy Jenkins
+                sh 'docker -v'
+                sh 'docker-compose -v'
+            }
+        }
          stage('Build Docker Images') {
             steps {
                 script {
