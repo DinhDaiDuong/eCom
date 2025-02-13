@@ -92,6 +92,7 @@ stage('Run Containers') {
                         sh 'node -v'  // Kiểm tra version Node.js
                         sh 'npm -v'   // Kiểm tra npm
                         sh 'npm install'
+                        sh 'npx sequelize-cli db:migrate'
                         sh 'npm test --passWithNoTests || true'
                         sh 'CI=false npm run'
                     }
