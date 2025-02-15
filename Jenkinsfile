@@ -7,6 +7,7 @@ pipeline {
     
     environment {
         BUILD_START_TIME = ''
+        TEST_SIZES = "1 2 4 8"
     }
     
     stages {
