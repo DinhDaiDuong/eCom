@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     tools {
-        nodejs 'Nodejs16'  // Tên đã cấu hình ở trên
+        nodejs 'Nodejs16' 
     }
     
     environment {
@@ -10,45 +10,6 @@ pipeline {
     }
     
     stages {
-        stage('Check Files') {
-    steps {
-        sh 'pwd'
-        sh 'ls -la'
-        dir('ecomResource') {
-            sh 'ls -la'
-        }
-    }
-}
-        stage('Check Docker') {
-            steps {
-                sh 'whoami'   // Kiểm tra user đang chạy Jenkins
-                sh 'docker -v'
-                sh 'docker-compose -v'
-            }
-        }
-         stage('Build Docker Images') {
-    steps {
-        dir('ecomResource') {  // Di chuyển vào thư mục chứa docker-compose.yml
-            sh 'docker-compose build'
-        }
-    }
-}
-
-stage('Run Containers') {
-    steps {
-        dir('ecomResource') {
-            sh 'docker-compose up -d'
-        }
-    }
-}
-
-        stage('Check Running Containers') {
-            steps {
-                script {
-                    sh 'docker ps'
-                }
-            }
-        }
         stage('Setup Metrics Directory') {
             steps {
                 sh 'mkdir -p metrics'
@@ -68,10 +29,10 @@ stage('Run Containers') {
                 script {
                     def startTime = System.currentTimeMillis()
                     
-                   dir('ecomResource/eCommerce_Reactjs') {  
+                   dir('eCommerce') {  
                         sh 'node -v'  // Kiểm tra version
                         sh 'npm -v'   // Kiểm tra npm
-                        sh 'npm install'
+                         sh 'npm install --legacy-peer-deps'  
                         sh 'npm test --passWithNoTests || true'
                         sh 'CI=false npm run build'
 
@@ -83,32 +44,13 @@ stage('Run Containers') {
                 }
             }
         }
-         stage('Backend Build & Test') {
-            steps {
-                script {
-                    def startTime = System.currentTimeMillis()
-                    
-                    dir('ecomResource/ecomAPI') {  
-                        sh 'node -v'  // Kiểm tra version Node.js
-                        sh 'npm -v'   // Kiểm tra npm
-                        sh 'npm install'
-                        sh 'npx sequelize-cli db:migrate'
-                        sh 'npm test --passWithNoTests || true'
-                        sh 'CI=false npm run'
-                    }
-                    
-                    def duration = System.currentTimeMillis() - startTime
-                    writeFile file: 'ecomResource/metrics/backend-build.txt', text: duration.toString()
-                }
-            }
-        }
+        
         stage('Generate Report') {
             steps {
                 script {
                     def report = """
                         Pipeline Report
                         ==============
-                         Backend Build: ${readFile('ecomResource/metrics/backend-build.txt').trim()}ms
                         Frontend Build: ${readFile('ecomResource/metrics/frontend-build.txt').trim()}ms
                     """.stripIndent()
                     
@@ -129,7 +71,7 @@ stage('Run Containers') {
             def diskUsage = sh(script: 'df -h / | awk \'NR==2{print $5}\'', returnStdout: true).trim()
             
             // Lưu metrics
-            writeFile file: 'ecomResource/metrics/resources.txt', text: """
+            writeFile file: 'eCommerce/metrics/resources.txt', text: """
                 CPU: ${cpuUsage}%
                 Memory: ${memUsage}%
                 Disk: ${diskUsage}
@@ -137,6 +79,68 @@ stage('Run Containers') {
         }
     }
 }
+  stage('Run Tests') {
+            steps {
+                script {
+                    // Function to run test with specific job count
+                    def runTest = { jobCount ->
+                        def startTime = System.currentTimeMillis()
+                        def initialCpu = sh(script: "top -bn1 | grep 'Cpu(s)' | awk '{print \$2}'", returnStdout: true).trim()
+                        def initialRam = sh(script: "free -m | awk '/Mem:/ {print \$3}'", returnStdout: true).trim()
+                        
+                        // Run jobs in parallel
+                        def parallel_jobs = [:]
+                        for (int i = 0; i < jobCount.toInteger(); i++) {
+                            def job_num = i
+                            parallel_jobs["job_${job_num}"] = {
+                                sh 'sleep 10'
+                            }
+                        }
+                        parallel parallel_jobs
+                        
+                        def endTime = System.currentTimeMillis()
+                        def finalCpu = sh(script: "top -bn1 | grep 'Cpu(s)' | awk '{print \$2}'", returnStdout: true).trim()
+                        def finalRam = sh(script: "free -m | awk '/Mem:/ {print \$3}'", returnStdout: true).trim()
+                        
+                        // Calculate metrics
+                        def duration = (endTime - startTime) / 1000
+                        def cpuUsage = finalCpu.toFloat() - initialCpu.toFloat()
+                        def ramUsage = finalRam.toInteger() - initialRam.toInteger()
+                        
+                        // Save metrics
+                        sh """
+                            echo "${duration},${cpuUsage},${ramUsage}" > metrics/job_${jobCount}.txt
+                        """
+                        
+                        echo "Results for ${jobCount} jobs:"
+                        echo "Duration: ${duration}s"
+                        echo "CPU Usage: ${cpuUsage}%"
+                        echo "RAM Usage: ${ramUsage}MB"
+                        
+                        return [duration: duration, cpu: cpuUsage, ram: ramUsage]
+                    }
+                    
+                    // Run tests for different job counts
+                    def results = [:]
+                    TEST_SIZES.split().each { size ->
+                        results[size] = runTest(size)
+                    }
+                    
+                    // Generate report
+                    def report = """# Performance Results
+                    
+| Jobs | Duration (s) | CPU Usage (%) | RAM Usage (MB) |
+|------|-------------|---------------|----------------|
+"""
+                    results.each { size, metrics ->
+                        report += "| ${size} | ${metrics.duration} | ${metrics.cpu} | ${metrics.ram} |\n"
+                    }
+                    
+                    writeFile file: 'pipeline-report.md', text: report
+                }
+            }
+        }
+    
     }
     
     post {
